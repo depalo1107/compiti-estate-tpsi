@@ -1,0 +1,29 @@
+import java.util.concurrent.locks.*;
+
+class SharedResource {
+    private final Lock lock = new ReentrantLock();
+    private final Condition condition = lock.newCondition();
+    private boolean available = false;
+
+    public void produce() {
+        lock.lock();
+        try {
+            while(available) condition.await();
+            available = true;
+            condition.signal();
+        } finally {
+            lock.unlock();
+        }
+    }
+
+    public void consume() {
+        lock.lock();
+        try {
+            while(!available) condition.await();
+            available = false;
+            condition.signal();
+        } finally {
+            lock.unlock();
+        }
+    }
+}
