@@ -1,0 +1,22 @@
+import java.util.concurrent.*;
+import java.util.*;
+
+public class PrimeCalculator {
+    public static void main(String[] args) throws Exception {
+        ExecutorService executor = Executors.newFixedThreadPool(3);
+        List<Future<Integer>> results = new ArrayList<>();
+        
+        for(int i = 0; i < 5; i++) {
+            final int taskId = i;
+            results.add(executor.submit(() -> {
+                TimeUnit.SECONDS.sleep(1);
+                return taskId * 10;
+            }));
+        }
+        
+        for(Future<Integer> f : results) {
+            System.out.println("Risultato: " + f.get());
+        }
+        executor.shutdown();
+    }
+}
