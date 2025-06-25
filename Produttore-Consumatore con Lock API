@@ -1,0 +1,66 @@
+import java.util.LinkedList;
+import java.util.Queue;
+import java.util.concurrent.locks.*;
+
+public class ProduttoreConsumatoreLock {
+    private static final int CAPACITY = 5;
+    private final Queue<Integer> buffer = new LinkedList<>();
+    private final Lock lock = new ReentrantLock(true);
+    private final Condition notFull = lock.newCondition();
+    private final Condition notEmpty = lock.newCondition();
+
+    public void produce(int value) throws InterruptedException {
+        lock.lock();
+        try {
+            while(buffer.size() == CAPACITY) {
+                notFull.await();
+            }
+            buffer.add(value);
+            System.out.println("Prodotto: " + value + " | Size: " + buffer.size());
+            notEmpty.signal();
+        } finally {
+            lock.unlock();
+        }
+    }
+
+    public int consume() throws InterruptedException {
+        lock.lock();
+        try {
+            while(buffer.isEmpty()) {
+                notEmpty.await();
+            }
+            int value = buffer.remove();
+            System.out.println("Consumato: " + value + " | Size: " + buffer.size());
+            notFull.signal();
+            return value;
+        } finally {
+            lock.unlock();
+        }
+    }
+
+    public static void main(String[] args) {
+        ProduttoreConsumatoreLock pc = new ProduttoreConsumatoreLock();
+        
+        new Thread(() -> {
+            for(int i = 1; i <= 10; i++) {
+                try {
+                    pc.produce(i);
+                    Thread.sleep((int)(Math.random() * 500));
+                } catch (InterruptedException e) {
+                    Thread.currentThread().interrupt();
+                }
+            }
+        }).start();
+        
+        new Thread(() -> {
+            for(int i = 0; i < 10; i++) {
+                try {
+                    pc.consume();
+                    Thread.sleep((int)(Math.random() * 1000));
+                } catch (InterruptedException e) {
+                    Thread.currentThread().interrupt();
+                }
+            }
+        }).start();
+    }
+}
