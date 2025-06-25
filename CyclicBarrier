@@ -1,0 +1,33 @@
+import java.util.concurrent.CyclicBarrier;
+
+class RaceParticipant implements Runnable {
+    private final CyclicBarrier barrier;
+    
+    public RaceParticipant(CyclicBarrier barrier) {
+        this.barrier = barrier;
+    }
+    
+    @Override
+    public void run() {
+        try {
+            System.out.println("Atleta pronto");
+            barrier.await();
+            System.out.println("Partito!");
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+    }
+}
+
+public class RaceSimulation {
+    public static void main(String[] args) {
+        final int RUNNERS = 4;
+        CyclicBarrier barrier = new CyclicBarrier(RUNNERS, 
+            () -> System.out.println("Tutti pronti! Via!")
+        );
+        
+        for(int i = 0; i < RUNNERS; i++) {
+            new Thread(new RaceParticipant(barrier)).start();
+        }
+    }
+}
