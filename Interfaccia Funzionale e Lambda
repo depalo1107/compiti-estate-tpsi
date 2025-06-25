@@ -1,0 +1,14 @@
+@FunctionalInterface
+interface StringProcessor {
+    String process(String input);
+}
+
+public class LambdaDemo {
+    public static void main(String[] args) {
+        StringProcessor toUpperCase = str -> str.toUpperCase();
+        StringProcessor trimmer = String::trim;
+        
+        System.out.println(toUpperCase.process("ciao"));
+        System.out.println(trimmer.process("  testo  "));
+    }
+}
