@@ -1,0 +1,59 @@
+import java.util.concurrent.Semaphore;
+
+class Buffer {
+    private int[] buffer;
+    private int size, in = 0, out = 0;
+    private Semaphore semVuoti, semPieni, mutex;
+
+    public Buffer(int size) {
+        this.size = size;
+        buffer = new int[size];
+        semVuoti = new Semaphore(size);  // all'inizio tutti vuoti
+        semPieni = new Semaphore(0);     // nessuno pieno
+        mutex = new Semaphore(1);        // mutua esclusione
+    }
+
+    public void produce(int value) throws InterruptedException {
+        semVuoti.acquire();   // aspetta posto libero
+        mutex.acquire();      // entra in sezione critica
+        buffer[in] = value;
+        in = (in + 1) % size;
+        System.out.println("Prodotto: " + value);
+        mutex.release();
+        semPieni.release();   // segnala un pieno
+    }
+
+    public int consume() throws InterruptedException {
+        semPieni.acquire();   // aspetta un dato disponibile
+        mutex.acquire();
+        int value = buffer[out];
+        out = (out + 1) % size;
+        System.out.println("Consumanto: " + value);
+        mutex.release();
+        semVuoti.release();   // libera spazio
+        return value;
+    }
+}
+
+public class ProdCons {
+    public static void main(String[] args) {
+        Buffer buffer = new Buffer(5);
+
+        Thread produttore = new Thread(() -> {
+            for (int i = 1; i <= 10; i++) {
+                try { buffer.produce(i); Thread.sleep(200); }
+                catch (InterruptedException e) {}
+            }
+        });
+
+        Thread consumatore = new Thread(() -> {
+            for (int i = 1; i <= 10; i++) {
+                try { buffer.consume(); Thread.sleep(500); }
+                catch (InterruptedException e) {}
+            }
+        });
+
+        produttore.start();
+        consumatore.start();
+    }
+}
