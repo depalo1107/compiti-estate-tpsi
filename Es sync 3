@@ -1,0 +1,39 @@
+class Botteghino {
+    private int biglietti = 100;
+    private int personeAlBotteghino = 0;
+
+    public synchronized boolean compra(String nome) throws InterruptedException {
+        while (personeAlBotteghino == 5) wait(); // max 5 alla volta
+        if (biglietti == 0) return false;
+
+        personeAlBotteghino++;
+        System.out.println(nome + " al botteghino");
+
+        Thread.sleep((int)(Math.random()*500)); // tempo acquisto
+
+        if (biglietti > 0) {
+            biglietti--;
+            System.out.println(nome + " compra biglietto. Rimasti: " + biglietti);
+        }
+
+        personeAlBotteghino--;
+        notifyAll();
+        return true;
+    }
+}
+
+public class Concerto {
+    public static void main(String[] args) {
+        Botteghino b = new Botteghino();
+
+        for (int i = 1; i <= 200; i++) {
+            String nome = "Persona " + i;
+            new Thread(() -> {
+                try {
+                    Thread.sleep((int)(Math.random()*2000));
+                    b.compra(nome);
+                } catch (InterruptedException e) {}
+            }).start();
+        }
+    }
+}
