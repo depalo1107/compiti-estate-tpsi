@@ -1,0 +1,87 @@
+import java.util.ArrayList;
+
+class Magazzino {
+    private ArrayList<Integer> magazzino = new ArrayList<>();
+    private int capacita;
+    private boolean ispettoreDentro = false;
+
+    public Magazzino(int capacita) {
+        this.capacita = capacita;
+    }
+
+    public synchronized void produce(int num) throws InterruptedException {
+        while (magazzino.size() >= capacita || ispettoreDentro) {
+            wait(); // aspetta se pieno o se c'è l’ispettore
+        }
+        magazzino.add(num);
+        System.out.println("Prodotto: " + num);
+        notifyAll(); // sveglia consumatori e ispettore
+    }
+
+    public synchronized int consume() throws InterruptedException {
+        while (magazzino.isEmpty() || ispettoreDentro) {
+            wait(); // aspetta se vuoto o c’è ispettore
+        }
+        int val = magazzino.remove(magazzino.size() - 1);
+        System.out.println("Consumato: " + val);
+        notifyAll();
+        return val;
+    }
+
+    public synchronized void ispeziona(int soglia) throws InterruptedException {
+        ispettoreDentro = true;
+        while (!magazzino.isEmpty() && ispettoreDentro) {
+            int somma = magazzino.stream().mapToInt(Integer::intValue).sum();
+            if (somma >= soglia) {
+                System.out.println("ISPETTORE: somma = " + somma + " → reset");
+                magazzino.clear();
+            } else {
+                magazzino.set(0, somma);
+                System.out.println("ISPETTORE: mette " + somma + " al primo slot");
+            }
+            ispettoreDentro = false;
+            notifyAll();
+            break;
+        }
+    }
+}
+
+public class TestMagazzino {
+    public static void main(String[] args) {
+        Magazzino m = new Magazzino(5);
+
+        // Produttori
+        for (int i = 0; i < 3; i++) {
+            new Thread(() -> {
+                try {
+                    while (true) {
+                        m.produce((int)(Math.random()*50)*2); // solo numeri pari
+                        Thread.sleep(500);
+                    }
+                } catch (InterruptedException e) {}
+            }).start();
+        }
+
+        // Consumatori
+        for (int i = 0; i < 2; i++) {
+            new Thread(() -> {
+                try {
+                    while (true) {
+                        m.consume();
+                        Thread.sleep(1000);
+                    }
+                } catch (InterruptedException e) {}
+            }).start();
+        }
+
+        // Ispettore
+        new Thread(() -> {
+            try {
+                while (true) {
+                    Thread.sleep(3000);
+                    m.ispeziona(100);
+                }
+            } catch (InterruptedException e) {}
+        }).start();
+    }
+}
