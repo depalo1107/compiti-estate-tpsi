@@ -1,0 +1,35 @@
+import java.util.concurrent.Semaphore;
+
+public class StampaAlternata {
+    public static void main(String[] args) {
+        Semaphore semDispari = new Semaphore(1);  // parte il dispari
+        Semaphore semPari = new Semaphore(0);     // pari parte bloccato
+
+        Thread tDispari = new Thread(() -> {
+            for (int i = 1; i <= 19; i += 2) {
+                try {
+                    semDispari.acquire(); // aspetta turno
+                    System.out.println("Dispari: " + i);
+                    semPari.release();    // sblocca pari
+                } catch (InterruptedException e) {
+                    e.printStackTrace();
+                }
+            }
+        });
+
+        Thread tPari = new Thread(() -> {
+            for (int i = 2; i <= 20; i += 2) {
+                try {
+                    semPari.acquire();   // aspetta turno
+                    System.out.println("Pari: " + i);
+                    semDispari.release(); // sblocca dispari
+                } catch (InterruptedException e) {
+                    e.printStackTrace();
+                }
+            }
+        });
+
+        tDispari.start();
+        tPari.start();
+    }
+}
