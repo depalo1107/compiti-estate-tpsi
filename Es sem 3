@@ -1,0 +1,19 @@
+import java.util.concurrent.Semaphore;
+
+public class Sala {
+    public static void main(String[] args) {
+        Semaphore posti = new Semaphore(3); // max 3 thread dentro
+        for (int i = 1; i <= 10; i++) {
+            final int id = i;
+            new Thread(() -> {
+                try {
+                    posti.acquire();
+                    System.out.println("Thread " + id + " entra nella sala");
+                    Thread.sleep(1000); // lavora un po'
+                    System.out.println("Thread " + id + " esce");
+                    posti.release();
+                } catch (InterruptedException e) {}
+            }).start();
+        }
+    }
+}
