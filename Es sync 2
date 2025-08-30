@@ -1,0 +1,56 @@
+class Camerino {
+    private int posti;
+    public Camerino(int posti) { this.posti = posti; }
+
+    public synchronized void entra(String nome) throws InterruptedException {
+        while (posti == 0) wait();
+        posti--;
+        System.out.println(nome + " entra in camerino");
+    }
+
+    public synchronized void esci(String nome) {
+        posti++;
+        System.out.println(nome + " esce dal camerino");
+        notifyAll();
+    }
+}
+
+class Passerella {
+    private int posti;
+    public Passerella(int posti) { this.posti = posti; }
+
+    public synchronized void entra(String nome) throws InterruptedException {
+        while (posti == 0) wait();
+        posti--;
+        System.out.println(nome + " entra in passerella");
+    }
+
+    public synchronized void esci(String nome) {
+        posti++;
+        System.out.println(nome + " lascia la passerella");
+        notifyAll();
+    }
+}
+
+public class Sfilata {
+    public static void main(String[] args) {
+        Camerino camerino = new Camerino(2);
+        Passerella passerella = new Passerella(3);
+
+        for (int i = 1; i <= 10; i++) {
+            String nome = "Modello " + i;
+            new Thread(() -> {
+                try {
+                    camerino.entra(nome);
+                    Thread.sleep((int)(Math.random()*2000));
+                    passerella.entra(nome);
+                    camerino.esci(nome);
+
+                    Thread.sleep((int)(Math.random()*2000));
+                    passerella.esci(nome);
+
+                } catch (InterruptedException e) {}
+            }).start();
+        }
+    }
+}
