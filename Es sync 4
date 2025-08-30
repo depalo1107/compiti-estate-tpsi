@@ -1,0 +1,57 @@
+class Spogliatoio {
+    private int posti = 2;
+    public synchronized void entra(String nome) throws InterruptedException {
+        while (posti == 0) wait();
+        posti--;
+        System.out.println(nome + " entra nello spogliatoio");
+    }
+    public synchronized void esci(String nome) {
+        posti++;
+        System.out.println(nome + " esce dallo spogliatoio");
+        notifyAll();
+    }
+}
+
+class Pista {
+    private int posti = 4;
+    public synchronized void entra(String nome) throws InterruptedException {
+        while (posti == 0) wait();
+        posti--;
+        System.out.println(nome + " entra in pista");
+    }
+    public synchronized void esci(String nome) {
+        posti++;
+        System.out.println(nome + " lascia la pista");
+        notifyAll();
+    }
+}
+
+public class GaraKart {
+    public static void main(String[] args) {
+        Spogliatoio spogliatoio = new Spogliatoio();
+        Pista pista = new Pista();
+
+        for (int i = 1; i <= 8; i++) {
+            String nome = "Pilota " + i;
+            new Thread(() -> {
+                try {
+                    spogliatoio.entra(nome);
+                    Thread.sleep(500);
+                    spogliatoio.esci(nome);
+
+                    pista.entra(nome);
+                    for (int g = 1; g <= 15; g++) {
+                        System.out.println(nome + " fa giro " + g);
+                        Thread.sleep(200);
+                    }
+                    pista.esci(nome);
+
+                    spogliatoio.entra(nome);
+                    Thread.sleep(300);
+                    spogliatoio.esci(nome);
+
+                } catch (InterruptedException e) {}
+            }).start();
+        }
+    }
+}
